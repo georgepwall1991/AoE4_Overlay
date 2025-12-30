@@ -39,9 +39,9 @@ def find_player(text: str) -> bool:
             )
             return True
     except json.decoder.JSONDecodeError:
-        ...
+        logger.debug(f"Invalid JSON response when looking up player '{text}' by profile_id")
     except Exception:
-        logger.exception("")
+        logger.exception(f"Error looking up player '{text}' by profile_id")
 
     # Then try query
     try:
@@ -56,7 +56,7 @@ def find_player(text: str) -> bool:
             )
             return True
     except Exception:
-        logger.exception("")
+        logger.exception(f"Error searching for player '{text}' by query")
 
     logger.info(f"Failed to find a player with: {text}")
     settings.player_name, settings.profile_id, settings.steam_id = old
@@ -72,7 +72,47 @@ def get_full_match_history(amount: int) -> Optional[List[Any]]:
         data = json.loads(resp)
         return data['games']
     except Exception:
-        logger.exception("")
+        logger.exception(f"Error fetching match history for profile {settings.profile_id}")
+        return None
+
+
+def get_rating_history(leaderboard_id: int, amount: int = 100) -> Optional[List[Any]]:
+    """Gets rating history for a specific leaderboard.
+
+    Args:
+        leaderboard_id: The leaderboard ID (17=1v1, 18=2v2, 19=3v3, 20=4v4)
+        amount: Number of rating entries to retrieve
+
+    Returns:
+        List of rating history entries or None on error
+    """
+    url = f"https://aoe4world.com/api/v0/players/{settings.profile_id}/ratings/{leaderboard_id}?limit={amount}"
+    try:
+        resp = session.get(url, timeout=10).text
+        data = json.loads(resp)
+        return data.get('ratings', [])
+    except Exception:
+        logger.exception(f"Error fetching rating history for profile {settings.profile_id}, leaderboard {leaderboard_id}")
+        return None
+
+
+def get_leaderboard_data(leaderboard_id: int) -> Optional[Dict[str, Any]]:
+    """Gets leaderboard data for a specific leaderboard.
+
+    Args:
+        leaderboard_id: The leaderboard ID (17=1v1, 18=2v2, 19=3v3, 20=4v4)
+
+    Returns:
+        Dictionary with leaderboard data or None on error
+    """
+    url = f"https://aoe4world.com/api/v0/players/{settings.profile_id}/games?leaderboard={leaderboard_id}&limit=1"
+    try:
+        resp = session.get(url, timeout=10).text
+        data = json.loads(resp)
+        # Return player stats from the leaderboard
+        return data
+    except Exception:
+        logger.exception(f"Error fetching leaderboard data for profile {settings.profile_id}, leaderboard {leaderboard_id}")
         return None
 
 
@@ -125,7 +165,7 @@ class Api_checker:
         Returns match data if there is a new game"""
 
         if self.sleep(delayed_seconds):
-            return
+            return None
 
         while not self.stop_event.is_set():
             result = self.get_data()
@@ -133,11 +173,11 @@ class Api_checker:
                 return result
 
             if self.sleep(settings.interval):
-                return
+                return None
 
     def get_data(self) -> Optional[Dict[str, Any]]:
         if self.stop_event.is_set():
-            return
+            return None
 
         # Get last match from aoe4world.com
         try:
@@ -145,20 +185,20 @@ class Api_checker:
             resp = session.get(url, timeout=10)
             data = json.loads(resp.text)
         except Exception:
-            logger.exception("")
-            return
+            logger.exception(f"Error fetching last game for profile {settings.profile_id}")
+            return None
 
         if self.stop_event.is_set():
-            return
+            return None
         if "error" in data:
-            return
+            return None
 
         # Calc old leaderboard id
         data['leaderboard_id'] = 0
         try:
             data['leaderboard_id'] = int(data['kind'][-1]) + 16
         except Exception:
-            logger.exception("")
+            logger.debug(f"Could not parse leaderboard_id from kind '{data.get('kind')}', defaulting to 0")
 
         # Calc started time
         started = datetime.strptime(data['started_at'],

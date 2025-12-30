@@ -1,14 +1,87 @@
-venv/*
-__pycache__/*
-.vscode/*
-AoE4_Overlay.build/*
-AoE4_Overlay.dist/*
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+*.whl
+
+# Nuitka build artifacts
+AoE4_Overlay.build/
+AoE4_Overlay.dist/
+*.exe
+
+# PyInstaller
+*.spec
+
+# Testing and coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# Logs
+*.log
+file.log
+logs/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.spyderproject
+.spyproject
+
+# OS-specific
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Environment and secrets
+.env
+.env.local
+*.pem
+*.key
+secrets.json
+credentials.json
+
+# Custom user files (generated at runtime)
+custom.css
+custom.js
+config.json
+
+# Local development scripts
 _compile.bat
 _venv.bat
 _vsc.bat
-*.pyc
-file.log
 test.py
-custom.css
-custom.js
-.idea
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+.cache/

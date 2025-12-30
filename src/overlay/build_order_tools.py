@@ -6,6 +6,12 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtWidgets import QLabel
 
+# Constants for build order validation
+MAX_AGE = 4  # AoE4 Imperial Age
+SUPPORTED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.webp']
+REQUIRED_BUILD_ORDER_FIELDS = {'population_count', 'villager_count', 'age', 'resources', 'notes'}
+REQUIRED_RESOURCE_FIELDS = {'wood', 'food', 'gold', 'stone'}
+
 # flags of the different civilizations
 civilization_flags = {
     'Abbasid Dynasty': 'civilization_flag/CivIcon-AbbasidAoE4_spacing.png',
@@ -160,7 +166,7 @@ def check_valid_aoe4_build_order(data: dict) -> bool:
             return False
 
         # age
-        if (not isinstance(item['age'], int)) or (int(item['age']) > 4):
+        if (not isinstance(item['age'], int)) or (int(item['age']) > MAX_AGE):
             print(f'Build order \'{name}\' does not have a valid age number.')
             return False
 
@@ -199,7 +205,9 @@ def check_valid_aoe4_build_order_from_string(data_str: str) -> bool:
     try:
         data = json.loads(data_str)
         return check_valid_aoe4_build_order(data)
-    except:
+    except json.JSONDecodeError:
+        return False
+    except Exception:
         return False
 
 
@@ -285,7 +293,7 @@ def search_image_extension(init_image_path: str) -> Optional[str]:
         # Split into base and (possibly empty) original extension
         base, orig_ext = os.path.splitext(init_image_path)
 
-        extensions = ['.png', '.jpg', '.webp']  # List of extensions to try
+        extensions = list(SUPPORTED_IMAGE_EXTENSIONS)  # Copy to avoid modifying constant
         if orig_ext in extensions:  # Do not re-test the initial extension
             extensions.remove(orig_ext)
 

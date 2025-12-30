@@ -11,6 +11,18 @@ from overlay.settings import settings
 logger = get_logger(__name__)
 
 
+# Column indices for match table
+class Column:
+    TEAM1 = 0
+    TEAM2 = 1
+    MAP = 2
+    STARTED = 3
+    MODE = 4
+    RESULT = 5
+    RATING_DIFF = 6
+    LINK = 7
+
+
 class MatchTableModel(QtCore.QAbstractTableModel):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -41,55 +53,55 @@ class MatchTableModel(QtCore.QAbstractTableModel):
                     break
         
         if role == QtCore.Qt.DisplayRole:
-            if col == 0: # Team 1 (Main Team)
+            if col == Column.TEAM1:  # Main Team
                 return self._format_team(match_data, main_team_idx)
-            elif col == 1: # Team 2 (Opponent)
+            elif col == Column.TEAM2:  # Opponent
                 other_team_idx = 1 if main_team_idx == 0 else 0
                 return self._format_team(match_data, other_team_idx)
-            elif col == 2: # Map
+            elif col == Column.MAP:
                 return match_data.get('map', "Unknown map")
-            elif col == 3: # Started
+            elif col == Column.STARTED:
                 try:
                     started = datetime.strptime(match_data['started_at'], "%Y-%m-%dT%H:%M:%S.000Z")
                     return started.strftime("%b %d, %H:%M:%S")
                 except ValueError:
                     return match_data['started_at']
-            elif col == 4: # Mode
+            elif col == Column.MODE:
                 return match_data.get('kind', '')
-            elif col == 5: # Result
+            elif col == Column.RESULT:
                 if main_player_data and main_player_data.get('result'):
                     return main_player_data['result'].capitalize()
                 return "?"
-            elif col == 6: # Rating diff
+            elif col == Column.RATING_DIFF:
                 if main_player_data and main_player_data.get('rating_diff'):
                     return str(main_player_data['rating_diff'])
                 return "?"
-            elif col == 7: # Link text
+            elif col == Column.LINK:
                 return "Game Link"
 
         elif role == QtCore.Qt.TextAlignmentRole:
-            if col in [0, 1]:
+            if col in [Column.TEAM1, Column.TEAM2]:
                 return QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
             return QtCore.Qt.AlignCenter
 
         elif role == QtCore.Qt.ForegroundRole:
-            if col == 5: # Result color
+            if col == Column.RESULT:
                 result = main_player_data.get('result') if main_player_data else None
                 if result == 'win':
                     return QtGui.QColor("#48bd21")
                 elif result == 'loss':
                     return QtGui.QColor("red")
-            elif col == 7: # Link color
+            elif col == Column.LINK:
                 return QtGui.QColor("#7ab6ff")
-        
+
         elif role == QtCore.Qt.FontRole:
-            if col == 7:
+            if col == Column.LINK:
                 font = QtGui.QFont()
                 font.setUnderline(True)
                 return font
-            if col in [0, 1]: # Teams
+            if col in [Column.TEAM1, Column.TEAM2]:
                 font = QtGui.QFont()
-                # font.setPointSize(9) 
+                # font.setPointSize(9)
                 return font
 
         return None
@@ -167,7 +179,7 @@ class MatchHistoryTab(QtWidgets.QWidget):
         self.model.set_matches([])
 
     def on_click(self, index: QtCore.QModelIndex):
-        if index.column() == 7: # Link column
+        if index.column() == Column.LINK:
             match = self.model.get_match_at(index.row())
             if match:
                 game_id = match.get("game_id")

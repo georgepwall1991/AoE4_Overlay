@@ -16,6 +16,12 @@ from overlay.settings import settings
 logger = get_logger(__name__)
 ROOT = pathlib.Path(sys.argv[0]).parent.absolute()
 
+# Time constants (in seconds)
+SECONDS_PER_MINUTE = 60
+SECONDS_PER_HOUR = 3600
+SECONDS_PER_DAY = 86400
+SECONDS_PER_YEAR = 31557600  # 365.25 days
+
 
 def zeroed(value: Optional[int]) -> int:
     """ Returns `value` after replacing `None` with 0"""
@@ -175,13 +181,13 @@ def process_game(game_data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def strtime(t: Union[int, float], show_seconds: bool = False) -> str:
-    """ Returns formatted string 
+    """ Returns formatted string
     X days, Y hours, Z minutes
     """
-    years, delta = divmod(t, 31557600)
-    days, delta = divmod(delta, 86400)
-    hours, delta = divmod(delta, 3600)
-    minutes, seconds = divmod(delta, 60)
+    years, delta = divmod(t, SECONDS_PER_YEAR)
+    days, delta = divmod(delta, SECONDS_PER_DAY)
+    hours, delta = divmod(delta, SECONDS_PER_HOUR)
+    minutes, seconds = divmod(delta, SECONDS_PER_MINUTE)
 
     s = []
     if years:
