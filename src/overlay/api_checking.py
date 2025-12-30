@@ -63,44 +63,6 @@ def find_player(text: str) -> bool:
     return False
 
 
-# Not used anymore
-def get_rating_history(leaderboard_id: int, amount: int = 1) -> List[Any]:
-    """ Gets player match history"""
-    if settings.steam_id:
-        url = f"https://aoeiv.net/api/player/ratinghistory?game=aoe4&leaderboard_id={leaderboard_id}&steam_id={settings.steam_id}&count={amount}"
-    elif settings.profile_id:
-        url = f"https://aoeiv.net/api/player/ratinghistory?game=aoe4&leaderboard_id={leaderboard_id}&profile_id={settings.profile_id}&count={amount}"
-    else:
-        return []
-
-    resp = session.get(url, timeout=10).text
-    try:
-        return json.loads(resp)
-    except:
-        logger.warning(f"Failed to parse rating history: {resp}")
-        return []
-
-
-# Not used anymore
-def get_leaderboard_data(leaderboard_id: int) -> Dict[str, Any]:
-    """ Gets leaderboard data for the main player"""
-    if settings.steam_id:
-        url = f"https://aoeiv.net/api/leaderboard?game=aoe4&leaderboard_id={leaderboard_id}&steam_id={settings.steam_id}&count=1"
-    elif settings.profile_id:
-        url = f"https://aoeiv.net/api/leaderboard?game=aoe4&leaderboard_id={leaderboard_id}&profile_id={settings.profile_id}&count=1"
-    elif settings.player_name:
-        url = f"https://aoeiv.net/api/leaderboard?game=aoe4&leaderboard_id={leaderboard_id}&search={settings.player_name}&count=1"
-    else:
-        return {}
-
-    resp = session.get(url, timeout=10).text
-    try:
-        return json.loads(resp)
-    except:
-        logger.warning(f"Failed to parse leaderboard data: {resp}")
-        return {}
-
-
 def get_full_match_history(amount: int) -> Optional[List[Any]]:
     """ Gets match history and adds some data its missing"""
 
@@ -140,13 +102,6 @@ class Api_checker:
             self.force_check_event.clear()
             return False
 
-        # We wait on force_check_event because if it gets set, we want to wake up immediately
-        # But if stop_event gets set, we also want to know.
-        # Since we can only wait on one event at a time easily without complex logic,
-        # and force_check implies "stop sleeping and check now", we wait on that.
-        # We should also check stop_event periodically or use a composite wait if possible,
-        # but here we can just wait on force_check_event with a timeout.
-        
         start_time = time.time()
         while time.time() - start_time < seconds:
             remaining = seconds - (time.time() - start_time)
@@ -155,13 +110,6 @@ class Api_checker:
             
             if self.stop_event.is_set():
                 return True
-            
-            # Wait for force_check or a small slice to check stop_event again
-            # Using a small slice (e.g. 0.5s) mimics the old behavior but cleaner
-            # OR we can wait on force_check_event for 'remaining' but then we 
-            # won't catch stop_event until it triggers or timeout. 
-            # Ideally we'd wait on both.
-            # Simpler approach: wait on force_check_event with timeout of min(remaining, 0.5)
             
             wait_time = min(remaining, 0.5)
             if self.force_check_event.wait(timeout=wait_time):
