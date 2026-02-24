@@ -1,4 +1,5 @@
 import os
+import platform
 import subprocess
 import sys
 import webbrowser
@@ -59,6 +60,20 @@ def excepthook(exc_type: Type[BaseException], exc_value: Exception,
 sys.excepthook = excepthook
 
 
+def _open_folder(path: str):
+    """Opens a folder in the platform's file manager."""
+    try:
+        system = platform.system()
+        if system == "Windows":
+            subprocess.run(['explorer', path])
+        elif system == "Darwin":
+            subprocess.run(['open', path])
+        else:
+            subprocess.run(['xdg-open', path])
+    except Exception:
+        logger.warning(f"Failed to open folder: {path}")
+
+
 class MainApp(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
@@ -70,8 +85,12 @@ class MainApp(QtWidgets.QMainWindow):
         self.setWindowTitle(f"AoE IV: Overlay ({VERSION})")
         self.setWindowIcon(QtGui.QIcon(file_path('img/aoe4_sword_shield.ico')))
         self.setGeometry(0, 0, settings.app_width, settings.app_height)
-        self.move(QtWidgets.QDesktopWidget().availableGeometry().center() -
-                  QtCore.QPoint(int(self.width() / 2), int(self.height() / 2)))
+        screen = QtWidgets.QApplication.primaryScreen()
+        if screen:
+            center = screen.availableGeometry().center()
+        else:
+            center = QtCore.QPoint(960, 540)
+        self.move(center - QtCore.QPoint(int(self.width() / 2), int(self.height() / 2)))
 
         # Create central widget
         self.setCentralWidget(TabWidget(self, VERSION))
@@ -88,7 +107,7 @@ class MainApp(QtWidgets.QMainWindow):
             getattr(QtWidgets.QStyle, 'SP_DirLinkIcon'))
         htmlAction = QtWidgets.QAction(icon, 'Html files', self)
         htmlAction.triggered.connect(
-            lambda: subprocess.run(['explorer', file_path("html")]))
+            lambda: _open_folder(file_path("html")))
         file_menu.addAction(htmlAction)
 
         # Config
@@ -96,7 +115,7 @@ class MainApp(QtWidgets.QMainWindow):
             getattr(QtWidgets.QStyle, 'SP_DirLinkIcon'))
         htmlAction = QtWidgets.QAction(icon, 'Config/logs', self)
         htmlAction.triggered.connect(
-            lambda: subprocess.run(['explorer', CONFIG_FOLDER]))
+            lambda: _open_folder(CONFIG_FOLDER))
         file_menu.addAction(htmlAction)
 
         # Exit

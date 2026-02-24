@@ -164,7 +164,8 @@ class AoEOverlay(OverlayWidget):
     def setup_as_overlay(self):
         if settings.overlay_geometry is None:
             self.setGeometry(0, 0, 700, 400)
-            sg = QtWidgets.QDesktopWidget().screenGeometry(0)
+            screen = QtWidgets.QApplication.primaryScreen()
+            sg = screen.geometry() if screen else QtCore.QRect(0, 0, 1920, 1080)
             self.move(sg.width() - self.width() + 15, sg.top() - 20)
         else:
             self.setGeometry(*settings.overlay_geometry)

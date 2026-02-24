@@ -80,11 +80,17 @@ class InnerPlayer(PlayerWidget):
             item.textChanged.connect(function)
 
     def disconnect_changes(self):
-        self.flag.currentIndexChanged.disconnect()
+        try:
+            self.flag.currentIndexChanged.disconnect()
+        except (TypeError, RuntimeError):
+            pass
         for item in (self.name, self.rating, self.rank, self.winrate,
                      self.wins, self.losses, self.civ_games, self.civ_winrate,
                      self.civ_median_wins):
-            item.textChanged.disconnect()
+            try:
+                item.textChanged.disconnect()
+            except (TypeError, RuntimeError):
+                pass
 
     def update_name_color(self):
         color = settings.team_colors[(self.team - 1) %
@@ -156,7 +162,10 @@ class InnerOverlay(AoEOverlay):
             self.players[-1].connect_to_function(self.changed)
 
     def update_data(self, player_data: Dict[str, Any]):
-        self.map.textChanged.disconnect()
+        try:
+            self.map.textChanged.disconnect()
+        except (TypeError, RuntimeError):
+            pass
         super().update_data(player_data)
         self.map.textChanged.connect(self.changed)
 

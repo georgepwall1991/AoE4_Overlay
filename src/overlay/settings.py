@@ -87,8 +87,30 @@ class _Settings:
             logger.warning("Failed to parse config file")
             return
 
+        defaults = self.__dict__.copy()
         for key in data:
-            setattr(self, key, data[key])
+            if key not in defaults:
+                # Allow new keys (forward compatibility)
+                setattr(self, key, data[key])
+                continue
+            default_val = defaults[key]
+            loaded_val = data[key]
+            # Validate type matches (allow None for Optional fields)
+            if default_val is not None and loaded_val is not None:
+                # Tuples are serialized as lists in JSON
+                if isinstance(default_val, tuple) and isinstance(loaded_val, list):
+                    setattr(self, key, loaded_val)
+                elif type(loaded_val) != type(default_val):
+                    logger.warning(
+                        f"Config type mismatch for '{key}': "
+                        f"expected {type(default_val).__name__}, "
+                        f"got {type(loaded_val).__name__}. Using default."
+                    )
+                    continue
+                else:
+                    setattr(self, key, loaded_val)
+            else:
+                setattr(self, key, loaded_val)
 
     def save(self):
         """ Saves configuration to app data"""

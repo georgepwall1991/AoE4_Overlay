@@ -10,6 +10,7 @@ from overlay.settings import settings
 
 logger = get_logger(__name__)
 session = requests.session()
+REQUEST_TIMEOUT = 15  # seconds
 
 
 def find_player(text: str) -> bool:
@@ -22,7 +23,7 @@ def find_player(text: str) -> bool:
     # First try if it's a profile id
     try:
         url = f"https://aoe4world.com/api/v0/players/{text}"
-        resp = json.loads(session.get(url).text)
+        resp = json.loads(session.get(url, timeout=REQUEST_TIMEOUT).text)
         if 'name' in resp:
             settings.profile_id = resp['profile_id']
             settings.player_name = resp['name']
@@ -39,7 +40,7 @@ def find_player(text: str) -> bool:
     # Then try query
     try:
         url = f"https://aoe4world.com/api/v0/players/search?query={text}"
-        resp = json.loads(session.get(url).text)
+        resp = json.loads(session.get(url, timeout=REQUEST_TIMEOUT).text)
         if resp['players']:
             settings.profile_id = resp['players'][0]['profile_id']
             settings.player_name = resp['players'][0]['name']
@@ -66,10 +67,10 @@ def get_rating_history(leaderboard_id: int, amount: int = 1) -> List[Any]:
     else:
         return []
 
-    resp = session.get(url).text
+    resp = session.get(url, timeout=REQUEST_TIMEOUT).text
     try:
         return json.loads(resp)
-    except:
+    except (json.JSONDecodeError, ValueError):
         logger.warning(f"Failed to parse rating history: {resp}")
         return []
 
@@ -86,10 +87,10 @@ def get_leaderboard_data(leaderboard_id: int) -> Dict[str, Any]:
     else:
         return {}
 
-    resp = session.get(url).text
+    resp = session.get(url, timeout=REQUEST_TIMEOUT).text
     try:
         return json.loads(resp)
-    except:
+    except (json.JSONDecodeError, ValueError):
         logger.warning(f"Failed to parse leaderboard data: {resp}")
         return {}
 
@@ -99,7 +100,7 @@ def get_full_match_history(amount: int) -> Optional[List[Any]]:
 
     url = f"https://aoe4world.com/api/v0/players/{settings.profile_id}/games?limit={amount}"
     try:
-        resp = session.get(url).text
+        resp = session.get(url, timeout=REQUEST_TIMEOUT).text
         data = json.loads(resp)
         return data['games']
     except Exception:
@@ -159,7 +160,7 @@ class Api_checker:
         # Get last match from aoe4world.com
         try:
             url = f"https://aoe4world.com/api/v0/players/{settings.profile_id}/games/last"
-            resp = session.get(url)
+            resp = session.get(url, timeout=REQUEST_TIMEOUT)
             data = json.loads(resp.text)
         except Exception:
             logger.exception("")

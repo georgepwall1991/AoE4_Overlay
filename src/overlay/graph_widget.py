@@ -133,7 +133,7 @@ class GraphWidget(QtWidgets.QWidget):
         """ Override for draw event"""
         try:
             self._draw_plot()
-        except:
+        except Exception:
             logger.exception("Failed to plot")
 
     def plot(self,

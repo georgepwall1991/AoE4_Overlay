@@ -85,10 +85,11 @@ class RandomTab(QtWidgets.QWidget):
         return pixmap
 
     def randomize_civ(self):
-        civ_name = random.choice(tuple(civ_data.values()))
-        if civ_name == self.current_civ:
-            self.randomize_civ()
-            return
+        choices = tuple(civ_data.values())
+        for _ in range(50):
+            civ_name = random.choice(choices)
+            if civ_name != self.current_civ:
+                break
         self.current_civ = civ_name
 
         img_path = file_path(f"img/flags/{civ_name}.webp")
@@ -97,10 +98,12 @@ class RandomTab(QtWidgets.QWidget):
         self.civ_label.setText(civ_name)
 
     def randomize_map(self):
-        map_name = random.choice(tuple(map_data.values()))
-        if map_name in (self.current_map, map_data[-1]):
-            self.randomize_map()
-            return
+        choices = tuple(map_data.values())
+        excluded = {self.current_map, map_data[-1]}
+        for _ in range(50):
+            map_name = random.choice(choices)
+            if map_name not in excluded:
+                break
         self.current_map = map_name
 
         img_path = file_path(f"img/maps/{map_name.replace(' ','_')}.png")

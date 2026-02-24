@@ -199,7 +199,7 @@ def check_valid_aoe4_build_order_from_string(data_str: str) -> bool:
     try:
         data = json.loads(data_str)
         return check_valid_aoe4_build_order(data)
-    except:
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError):
         return False
 
 
